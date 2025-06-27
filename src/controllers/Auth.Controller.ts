@@ -75,6 +75,60 @@ export class AuthController {
 	}
 
 	static forgotPassword = async (req: Request, res: Response) => {
-		res.json({ message: 'Forgot password endpoint not implemented yet' });
+		console.log(colors.blue.bold('-[Auth.Controller.ts]- Forgot password request received...'));
+		const { email } = req.body;
+		console.log(colors.blue.bold('-[Auth.Controller.ts]- Checking if user already exists in login ...'));
+		const user = await User.findOne({ where: { email } });
+
+		if (!user) {
+			const error = new Error('User does not exist in the database');
+			return res.status(404).json({ error: error.message, user: user });
+		}
+		user.token = generateToken();
+		await user.save();
+
+		await AuthEmail.sendPasswordResentToken({
+			name: user.name,
+			email: user.email,
+			token: user.token	
+		})
+		res.json({ message: 'Password reset token sent to your email', user: { name: user.name, email: user.email } });
+
+	}
+
+	static validateToken = async (req: Request, res: Response) => {
+		const { token } = req.body;
+		console.log(colors.blue.bold('-[Auth.Controller.ts]- Validating token...'));
+		//const user = await User.findOne({ where: { token } });
+		const tokenExists = await User.findOne({ where: { token } });
+		if (!tokenExists) {
+			const error = new Error('Invalid or expired token');
+			return res.status(401).json({ error: error.message });
+		}
+		res.json({ message: 'Token is valid', token: tokenExists.token, userId: tokenExists.id });
+		console.log(colors.green.bold('-[Auth.Controller.ts]- Token is valid: '), tokenExists.token);
+	}
+
+	static resetPasswordWithToken = async (req: Request, res: Response) => {
+		const { token } = req.params;
+		const { password } = req.body;
+
+		const user = await User.findOne({ where: { token } });
+		if (!user) {
+			const error = new Error('Invalid or expired token');
+			return res.status(401).json({ error: error.message });
+		}
+
+		// Asign the new password and clear the token
+		user.password = await hashPassword(password);
+		user.token = null;
+		await user.save();
+		res.json({ message: 'Password reset successfully', user: { name: user.name, email: user.email } });
+		console.log(colors.green.bold('-[Auth.Controller.ts]- Password reset successfully for user: '), user.name);
+	}
+
+	static user = async (req: Request, res: Response) => {
+		res.json(req.user);
+		
 	}
 }

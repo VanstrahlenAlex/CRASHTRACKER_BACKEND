@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/Auth.Controller';
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 import { handleInputErrors } from '../middleware/validation';
 import { limiter } from '../config/limiter';
+import { authenticate } from '../middleware/Auth.Middleware';
 
 
 const authRouter = Router();
@@ -62,5 +63,37 @@ authRouter.post('/forgot-password',
 	}
 )
 
+authRouter.post('/validate-token',
+	body('token').notEmpty().isLength({ min: 6, max: 6 }).withMessage('Token is required'),
+	handleInputErrors,
+	async (req, res, next) => {
+		try {
+			await AuthController.validateToken(req, res);
+		} catch (err) {
+			next(err);
+		}
+	}
+)
+
+
+authRouter.post('/reset-password/:token',
+	param('token').notEmpty().isLength({ min: 6, max: 6 }).withMessage('Token is required'),
+	body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+	handleInputErrors,
+	async (req, res, next) => {
+		try {
+			await AuthController.resetPasswordWithToken(req, res);
+		} catch (err) {
+			next(err);
+		}
+	}
+)
+
+authRouter.get('/user',
+	// Middleware to authenticate the user
+	authenticate,
+	AuthController.user
+	
+)
 
 export default authRouter;

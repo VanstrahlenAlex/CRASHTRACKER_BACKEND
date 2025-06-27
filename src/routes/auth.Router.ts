@@ -93,7 +93,35 @@ authRouter.get('/user',
 	// Middleware to authenticate the user
 	authenticate,
 	AuthController.user
-	
 )
+
+authRouter.post('/update-password',
+	authenticate,
+	body('current_password').notEmpty().withMessage('The current Password does not be empty'),
+	body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+	handleInputErrors,
+	async (req, res, next) => {
+		try {
+			await AuthController.updateCurrentUserPassword(req, res);
+		} catch (err) {
+			next(err);
+		}
+	}
+)
+
+authRouter.post('/check-password',
+	authenticate,
+	body('password').notEmpty().withMessage('The current Password does not be empty'),
+	handleInputErrors,
+	async (req, res, next) => {
+		try {
+			await AuthController.checkPassword(req, res);
+		} catch (err) {
+			next(err);
+		}
+	}
+)
+
+
 
 export default authRouter;

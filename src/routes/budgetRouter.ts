@@ -3,14 +3,19 @@ import colors from 'colors'
 import { BudgetController } from '../controllers/BudgetController';
 import { body, param } from 'express-validator';
 import { handleInputErrors } from '../middleware/validation';
-import { validateBudgetExists, validateBudgetId, validateBudgetInput } from '../middleware/budget.middleware';
+import { hasAccess, validateBudgetExists, validateBudgetId, validateBudgetInput } from '../middleware/budget.middleware';
 import { ExpensesController } from '../controllers/Expenses.Controller';
-import { validateExpenseExists, validateExpenseId, validateExpenseInput } from '../middleware/expense.middleware';
+import { validateExpenseExists, validateExpenseId, validateExpenseInput } from '../middleware/Expense.Middleware';
+import { authenticate } from '../middleware/Auth.Middleware';
+
 
 const router = Router();
 
+router.use(authenticate) // req.user contains the authenticated user
+
 router.param('budgetId', validateBudgetId);
-router.param('budgetId', validateBudgetExists);
+router.param('budgetId', validateBudgetExists); // req.budget contains the budget found by ID
+router.param('budgetId', hasAccess)
 
 
 router.param('expenseId', validateExpenseId);

@@ -8,6 +8,7 @@ export class BudgetController {
 			const budgets = await Budget.findAll({
 				order: [['createdAt', 'DESC']],
 				//TODO: Filtrar por usuario
+				where: { userId: req.user.id }, // Assuming req.user contains the authenticated user
 			});
 			res.json(budgets);
 			console.log(colors.blue.bold(' -[BudgetController.ts]- From GET BudgetController getAll'));
@@ -24,6 +25,7 @@ export class BudgetController {
 		console.log(colors.blue.bold(' -[BudgetController.ts]- Request body: '), req.body);
 		try {
 			const budget = new Budget(req.body);
+			budget.userId = req.user.id; // Assuming req.user contains the authenticated user
 			await budget.save();
 			console.log(colors.green.bold(' -[BudgetController.ts]- Budget created successfully: '), budget);
 			res.status(201).json("Budget created successfully");
@@ -39,6 +41,8 @@ export class BudgetController {
 		const budget = await Budget.findByPk(req.budget.id, {
 			include: [Expense]
 		})
+
+
 		res.json(budget)
 		
 	}

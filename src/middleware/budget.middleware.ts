@@ -47,3 +47,10 @@ export const validateBudgetInput = async (req: Request, res: Response, next: Nex
 	next()
 }
 
+export function hasAccess(req: Request, res: Response, next: NextFunction) {
+	if(req.budget.userId !== req.user.id) {
+		console.log(colors.red.bold(' -[budget.middleware.ts]- User does not have access to this budget'));
+		return res.status(403).json({ error: 'Forbidden, You do not have access to this budget' });
+	}
+	next()
+}

@@ -24,7 +24,7 @@ export class BudgetController {
 		console.log(colors.blue.bold(' -[BudgetController.ts]- From POST BudgetController create'));
 		console.log(colors.blue.bold(' -[BudgetController.ts]- Request body: '), req.body);
 		try {
-			const budget = new Budget(req.body);
+			const budget = await Budget.create(req.body);
 			budget.userId = req.user.id; // Assuming req.user contains the authenticated user
 			await budget.save();
 			console.log(colors.green.bold(' -[BudgetController.ts]- Budget created successfully: '), budget);

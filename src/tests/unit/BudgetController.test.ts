@@ -5,7 +5,11 @@ import { createRequest, createResponse } from "node-mocks-http";
 
 
 jest.mock("../../models/Budget", () => ({
-	findAll: jest.fn()
+	__esModule: true, // 👈 necesario para que funcione correctamente con import default
+	default: {
+		findAll: jest.fn(),
+		create: jest.fn(),
+	}
 }))
 describe("BudgetController", ()=> {
 
@@ -69,5 +73,67 @@ describe("BudgetController", ()=> {
 		expect(res._getJSONData()).toEqual({
 			error: "Error fetching budgets"
 		});
+	})
+})
+
+
+describe("BudgetController.create", () => {
+	it("Should create a new Budget and respond whit status code 201", async () => {
+		const mockBudget = {
+			save: jest.fn().mockResolvedValue(true),
+		};
+		(Budget.create as jest.Mock).mockResolvedValue(mockBudget);
+		const req = createRequest({
+			method: "POST",
+			url: "/api/budgets",
+			user: { id: 1 },
+			body: {
+				name: "Test Budget",
+				amount: 1000,
+				
+			}
+		});
+		const res = createResponse();
+		await BudgetController.create(req, res);
+		const data = res._getJSONData();
+		expect(res.statusCode).toBe(201);
+		expect(data).toBe("Budget created successfully");
+		expect(mockBudget.save).toHaveBeenCalled();
+		expect(mockBudget.save).toHaveBeenCalledTimes(1);
+		expect(Budget.create).toHaveBeenCalledWith(req.body);
+
+
+		console.log(data);
+	})
+
+	it("Should handle budget creation error", async () => {
+		const mockBudget = {
+			save: jest.fn(),
+		};
+		(Budget.create as jest.Mock).mockImplementation(() => {
+			throw new Error("Database error");
+		});
+		const req = createRequest({
+			method: "POST",
+			url: "/api/budgets",
+			user: { id: 1 },
+			body: {
+				name: "Test Budget",
+				amount: 1000,
+
+			}
+		});
+		const res = createResponse();
+		await BudgetController.create(req, res);
+		const data = res._getJSONData();
+		
+		expect(res.statusCode).toBe(500);
+		expect(data).toEqual({ error: "Internal server error" });
+
+
+		expect(mockBudget.save).not.toHaveBeenCalled();
+		expect(Budget.create).toHaveBeenCalledWith(req.body);
+
+		console.log(data);
 	})
 })
